@@ -1,0 +1,4 @@
+node_modules
+.DS_Store
+bin/.vs-code-aliases.json
+package-lock.json

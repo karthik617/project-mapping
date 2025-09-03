@@ -1,0 +1,14 @@
+{
+  "name": "project-mapping",
+  "version": "1.0.0",
+  "description": "To open project from terminal with a keywork",
+  "main": "index.js",
+  "bin": {
+    "vs": "./bin/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
