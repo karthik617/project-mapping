@@ -30,6 +30,20 @@ program
   .version("1.0.0");
 
 program
+  .command("help")
+  .description("Show help")
+  .action(() => {
+    console.log(" usage: vs [command] [options]");
+    console.log("");
+    console.log("Commands:");
+    console.log("  add <alias> <path>  Add an alias for a file/folder");
+    console.log("  remove <alias>      Remove an alias");
+    console.log("  list                List all aliases");
+    console.log("  edit <file|folder>  Open alias file in VS Code");
+    console.log("");
+  });
+
+program
   .command("add <alias> <path>")
   .description("Add an alias for a file/folder")
   .action((alias, target = ".") => {
@@ -85,7 +99,7 @@ program
         console.error("❌ Unsupported OS");
         process.exit(1);
     }
-    const command = `${baseCommand} ${File}`;  
+    const command = `${baseCommand} ${File}`;
     exec(command, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error: ${stderr || error.message}`);
