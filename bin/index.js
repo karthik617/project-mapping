@@ -1,86 +1,142 @@
 #!/usr/bin/env node
-const exec = require("child_process").exec;
+const { exec } = require("child_process");
 const os = require("os");
 const fs = require("fs");
 const path = require("path");
+const { Command } = require("commander");
 
-const args = process.argv.slice(2);
+const program = new Command();
+
+// ---- CONFIG ----
 const aliasFile = path.join(__dirname, ".vs-code-aliases.json");
 
-// Ensure alias file exists
+function expandHome(p) {
+  return p.replace(/^~($|\/|\\)/, `${os.homedir()}$1`);
+}
+
 if (!fs.existsSync(aliasFile)) {
   fs.writeFileSync(aliasFile, "{}");
 }
 let aliases = JSON.parse(fs.readFileSync(aliasFile, "utf-8"));
 
-// Helper to save aliases
 function saveAliases() {
   fs.writeFileSync(aliasFile, JSON.stringify(aliases, null, 2));
 }
 
-// ---- ALIAS MANAGEMENT ----
-if (args[0] === "--add" && args.length >= 3) {
-  const [ , name, target ] = args;
-  aliases[name] = target;
-  saveAliases();
-  console.log(`✅ Added alias "${name}" -> ${target}`);
-  process.exit(0);
-}
+// ---- COMMANDS ----
+program
+  .name("vs")
+  .description("Open VS Code with aliases")
+  .version("1.0.0");
 
-if (args[0] === "--remove" && args.length >= 2) {
-  const [ , name ] = args;
-  if (aliases[name]) {
-    delete aliases[name];
+program
+  .command("add <alias> <path>")
+  .description("Add an alias for a file/folder")
+  .action((alias, target = ".") => {
+    const resolved = expandHome(path.resolve(process.cwd(), target));
+    aliases[alias] = resolved;
     saveAliases();
-    console.log(`🗑️ Removed alias "${name}"`);
-  } else {
-    console.log(`⚠️ Alias "${name}" not found`);
-  }
-  process.exit(0);
-}
+    console.log(`✅ Added alias "${alias}" -> ${resolved}`);
+  });
 
-if (args[0] === "--list") {
+program
+  .command("remove <alias>")
+  .description("Remove an alias")
+  .action((alias) => {
+    if (aliases[alias]) {
+      delete aliases[alias];
+      saveAliases();
+      console.log(`🗑️ Removed alias "${alias}"`);
+    } else {
+      console.log(`⚠️ Alias "${alias}" not found`);
+    }
+  });
+
+program
+  .command("list")
+  .description("List all aliases")
+  .action(() => {
     if (Object.keys(aliases).length === 0) {
-        console.log("📂 No aliases found");
-        process.exit(0);
+      console.log("📂 No aliases found");
+      return;
     }
     console.log("📂 Your aliases:");
     Object.entries(aliases).forEach(([k, v]) => {
-        console.log(`  ${k} -> ${v}`);
+      console.log(`  ${k} -> ${v}`);
     });
-    process.exit(0);
-}
+  });
 
-// ---- OPEN FILES/FOLDERS ----
-if (args.length === 0) {
-  console.log("Usage: vs <alias|file|folder> [...]");
-  console.log("Alias management:\n vs --add <alias> <path>\n vs --remove <alias>\n vs --list");
-  process.exit(1);
-}
+program
+  .command("edit <file|folder>")
+  .description("Open alias file in VS Code")
+  .action((File) => {
+    let baseCommand;
+    switch (os.platform()) {
+      case "win32":
+        baseCommand = `"C:\\Users\\${process.env.USERNAME}\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"`;
+        break;
+      case "darwin":
+        baseCommand = `open -a "Visual Studio Code"`;
+        break;
+      case "linux":
+        baseCommand = `code`;
+        break;
+      default:
+        console.error("❌ Unsupported OS");
+        process.exit(1);
+    }
+    const command = `${baseCommand} ${File}`;  
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error: ${stderr || error.message}`);
+        process.exit(1);
+      }
+      if (stdout) console.log(stdout);
+    });
+  });
 
-// Replace aliases in args
-const resolvedArgs = args.map(arg => aliases[arg] || arg);
+// ---- DEFAULT BEHAVIOR: open alias/file/folder ----
+program
+  .argument("[targets...]", "alias, file, or folder to open")
+  .action((targets) => {
+    if (!targets || targets.length === 0) {
+      program.help(); // show usage
+    }
 
-let command;
-switch (os.platform()) {
-  case "win32":
-    command = `"C:\\Users\\${process.env.USERNAME}\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe" ${resolvedArgs.map(a => `"${a}"`).join(" ")}`;
-    break;
-  case "darwin":
-    command = `open -a "Visual Studio Code" ${resolvedArgs.map(a => `"${a}"`).join(" ")}`;
-    break;
-  case "linux":
-    command = `code ${resolvedArgs.map(a => `"${a}"`).join(" ")}`;
-    break;
-  default:
-    console.error("❌ Unsupported OS");
-    process.exit(1);
-}
+    const resolvedArgs = targets.map((arg) => {
+      const target = aliases[arg] || arg;
+      const expanded = expandHome(target);
+      if (!fs.existsSync(expanded)) {
+        console.warn(`⚠️ Warning: Path "${expanded}" does not exist`);
+      }
+      return expanded;
+    });
 
-exec(command, (error, stdout, stderr) => {
-  if (error) {
-    console.error(`Error: ${stderr || error.message}`);
-    process.exit(1);
-  }
-  if (stdout) console.log(stdout);
-});
+    // Base command by OS
+    let baseCommand;
+    switch (os.platform()) {
+      case "win32":
+        baseCommand = `"C:\\Users\\${process.env.USERNAME}\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"`;
+        break;
+      case "darwin":
+        baseCommand = `open -a "Visual Studio Code"`;
+        break;
+      case "linux":
+        baseCommand = `code`;
+        break;
+      default:
+        console.error("❌ Unsupported OS");
+        process.exit(1);
+    }
+
+    const command = `${baseCommand} ${resolvedArgs.map((f) => `"${f}"`).join(" ")}`;
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error: ${stderr || error.message}`);
+        process.exit(1);
+      }
+      if (stdout) console.log(stdout);
+    });
+  });
+
+program.parse(process.argv);
