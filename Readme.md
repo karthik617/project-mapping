@@ -4,7 +4,7 @@
 
 ## Installation
 ```bash
-npm install -g vs-quick-open
+npm install -g @karthik_yk/vs-quick-open
 ```
 
 ## Usage
