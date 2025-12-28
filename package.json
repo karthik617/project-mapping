@@ -1,17 +1,38 @@
 {
-  "name": "project-mapping",
+  "name": "@karthik_yk/vs-quick-open",
   "version": "1.0.0",
-  "description": "To open project from terminal with a keywork",
-  "main": "index.js",
+  "type": "module",
+  "description": "Quick VS Code launcher with project aliases from terminal",
+  "main": "bin/index.js",
   "bin": {
     "vs": "./bin/index.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "vscode",
+    "cli",
+    "editor",
+    "launcher",
+    "alias",
+    "productivity",
+    "terminal"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/karthik617/project-mapping"
+  },
+  "homepage": "https://github.com/karthik617/project-mapping#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "dependencies": {
     "commander": "^14.0.0"
-  }
+  },
+  "files": [
+    "bin/"
+  ]
 }
