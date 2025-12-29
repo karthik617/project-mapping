@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Quick VS Code launcher with project aliases from terminal",
-  "main": "bin/index.js",
+  "main": "index.js",
   "bin": {
-    "vs": "./bin/index.js"
+    "vs": "bin/vs.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
