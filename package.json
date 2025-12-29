@@ -1,6 +1,6 @@
 {
   "name": "@karthik_yk/vs-quick-open",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Quick VS Code launcher with project aliases from terminal",
   "main": "index.js",
